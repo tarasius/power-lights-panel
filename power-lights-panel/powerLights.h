@@ -74,8 +74,6 @@ private:
     void addGpio();
     void gpioSwitchesInput();
     void gpioButtonsInput();
-    void gpioFlapsInput();
-    void gpioParkBrakeInput();
 };
 
 #endif // _POWER_LIGHTS_H

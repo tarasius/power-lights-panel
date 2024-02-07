@@ -77,8 +77,6 @@ void powerLights::update()
     time(&now);
     gpioSwitchesInput();
     gpioButtonsInput();
-    gpioFlapsInput();
-    gpioParkBrakeInput();
 
     // Only update local values from sim if they are not currently being adjusted.
     // This stops them from jumping around due to lag of fetch/update cycle.
@@ -135,17 +133,8 @@ void powerLights::addGpio()
     taxiControl = globals.gpioCtrl->addSwitch("Taxi");
     navControl = globals.gpioCtrl->addSwitch("Nav");
     strobeControl = globals.gpioCtrl->addSwitch("Strobe");
-    pitotHeatControl = globals.gpioCtrl->addSwitch("Pitot Heat");
     avionics1Control = globals.gpioCtrl->addSwitch("Avionics1");
     avionics2Control = globals.gpioCtrl->addSwitch("Avionics2");
-    apuMasterControl = globals.gpioCtrl->addButton("APU Master");
-    apuStartControl = globals.gpioCtrl->addButton("APU Start");
-    apuBleedControl = globals.gpioCtrl->addButton("APU Bleed");
-    flapsUpControl = globals.gpioCtrl->addSwitch("Flaps Up");
-    flapsPosControl = globals.gpioCtrl->addRotaryEncoder("Flaps Pos");
-    flapsDownControl = globals.gpioCtrl->addSwitch("Flaps Down");
-    parkBrakeOffControl = globals.gpioCtrl->addSwitch("Park Brake Off");
-    parkBrakeOnControl = globals.gpioCtrl->addSwitch("Park Brake On");
 }
 
 void powerLights::gpioSwitchesInput()
@@ -261,29 +250,6 @@ void powerLights::gpioSwitchesInput()
         prevStrobeToggle = val;
     }
 
-    // Pitot Heat toggle
-    val = globals.gpioCtrl->readToggle(pitotHeatControl);
-    if (val != INT_MIN && val != prevPitotHeatToggle) {
-        // Switch toggled
-        globals.simVars->write(KEY_PITOT_HEAT_SET, val);
-        //globals.simVars->write(KEY_ANTI_ICE_SET, val);
-        //globals.simVars->write(KEY_WINDSHIELD_DEICE_SET, val);
-        // SDK bug - Not working for A320 so use vJoy
-        if (loadedAircraft != CESSNA_152 && loadedAircraft != CESSNA_172 && loadedAircraft != UNDEFINED) {
-#ifdef vJoyFallback
-            if (val == 0) {
-                // Anti ice off
-                globals.simVars->write(VJOY_BUTTON_12);
-            }
-            else {
-                // Anti ice on
-                globals.simVars->write(VJOY_BUTTON_13);
-            }
-#endif
-        }
-        prevPitotHeatToggle = val;
-    }
-
     // Avionics 1 toggle (external power on airliner)
     val = globals.gpioCtrl->readToggle(avionics1Control);
     if (val != INT_MIN && val != prevAvionics1Toggle) {
@@ -395,138 +361,3 @@ void powerLights::gpioButtonsInput()
     }
 }
 
-void powerLights::gpioFlapsInput()
-{
-    // Flaps rotate
-    int flapsVal = globals.gpioCtrl->readRotation(flapsPosControl);
-
-    // Flaps up toggle
-    int val = globals.gpioCtrl->readToggle(flapsUpControl);
-    if (val != INT_MIN && val != prevFlapsUpToggle) {
-        // Switch toggled
-        prevFlapsUpToggle = val;
-        if (val == 1) {
-            // Switch pressed
-            globals.simVars->write(KEY_FLAPS_UP);
-            lastFlapsPos = 0;
-            if (flapsVal != INT_MIN) {
-                flapsUpVal = flapsVal;  // Re-calibrate flaps values
-                int diff = flapsDownVal - flapsUpVal;
-                if (diff < 17 || diff > 23) {
-                    flapsDownVal = flapsUpVal + 20;
-                }
-            }
-            return;
-        }
-    }
-
-    // Flaps down toggle
-    val = globals.gpioCtrl->readToggle(flapsDownControl);
-    if (val != INT_MIN && val != prevFlapsDownToggle) {
-        // Switch toggled
-        prevFlapsDownToggle = val;
-        if (val == 1) {
-            // Switch pressed
-            globals.simVars->write(KEY_FLAPS_DOWN);
-            if (simVars->tfFlapsCount == 5) {
-                lastFlapsPos = 4;
-            }
-            else {
-                lastFlapsPos = simVars->tfFlapsCount;
-            }
-            if (flapsVal != INT_MIN) {
-                flapsDownVal = flapsVal;    // Re-calibrate flaps values
-                int diff = flapsDownVal - flapsUpVal;
-                if (diff < 17 || diff > 23) {
-                    flapsUpVal = flapsDownVal - 20;
-                }
-            }
-            return;
-        }
-    }
-
-    if (flapsVal != INT_MIN) {
-        // Check for new flaps position
-        double onePos = (flapsDownVal - flapsUpVal) / 4.0;
-        int flapsPos = (flapsVal + (onePos / 2.0) - flapsUpVal) / onePos;
-        if (simVars->tfFlapsCount == 6) {
-            // Boeing 747 has 6 flap positions so insert 2 extra
-            // flap positions between 1,2 and 3,full
-            double halfPos = (flapsDownVal - flapsUpVal) / 8.0;
-            int flapsHalfPos = (flapsVal + (halfPos / 2.0) - flapsUpVal) / halfPos;
-            if (flapsHalfPos >= 3) {
-                flapsPos++;
-            }
-            if (flapsHalfPos >= 7) {
-                flapsPos++;
-            }
-        }
-        else if (simVars->tfFlapsCount == 9) {
-            // Boeing 787 has 9 flap positions so insert 2 extra flap
-            // positions between 1,2 and 3,full and 3 between 2,3.
-            double halfPos = (flapsDownVal - flapsUpVal) / 8.0;
-            int flapsHalfPos = (flapsVal + (halfPos / 2.0) - flapsUpVal) / halfPos;
-            double thirdPos = (flapsDownVal - flapsUpVal) / 12.0;
-            int flapsThirdPos = (flapsVal + (thirdPos / 3.0) - flapsUpVal) / thirdPos;
-            if (flapsHalfPos >= 3) {
-                flapsPos++;
-            }
-            if (flapsHalfPos >= 7) {
-                flapsPos++;
-            }
-            if (flapsThirdPos >= 7) {
-                flapsPos++;
-            }
-            if (flapsThirdPos >= 8) {
-                flapsPos++;
-            }
-            if (flapsThirdPos >= 9) {
-                flapsPos++;
-            }
-        }
-        if (flapsPos != lastFlapsPos) {
-            if (lastFlapsPos != -1) {
-                if (simVars->tfFlapsCount == 5) {
-                    while (flapsPos > lastFlapsPos) {
-                        globals.simVars->write(KEY_FLAPS_INCR);
-                        lastFlapsPos++;
-                    }
-                    while (flapsPos < lastFlapsPos) {
-                        globals.simVars->write(KEY_FLAPS_DECR);
-                        lastFlapsPos--;
-                    }
-                }
-                else {
-                    double flapsSet = 16384.0 * flapsPos / simVars->tfFlapsCount;
-                    globals.simVars->write(KEY_FLAPS_SET, flapsSet);
-                }
-            }
-            lastFlapsPos = flapsPos;
-        }
-    }
-}
-
-void powerLights::gpioParkBrakeInput()
-{
-    // Park brake off toggle
-    int val = globals.gpioCtrl->readToggle(parkBrakeOffControl);
-    if (val != INT_MIN && val != prevParkBrakeOffToggle) {
-        // Switch toggled
-        if (val == 1 && simVars->parkingBrakeOn) {
-            // Switch pressed and parking brake on so release it
-            globals.simVars->write(KEY_PARKING_BRAKE_SET, 0);
-        }
-        prevParkBrakeOffToggle = val;
-    }
-
-    // Park brake on toggle
-    val = globals.gpioCtrl->readToggle(parkBrakeOnControl);
-    if (val != INT_MIN && val != prevParkBrakeOnToggle) {
-        // Switch toggled
-        if (val == 1 && !simVars->parkingBrakeOn) {
-            // Switch pressed and parking brake off so apply it
-            globals.simVars->write(KEY_PARKING_BRAKE_SET, 1);
-        }
-        prevParkBrakeOnToggle = val;
-    }
-}

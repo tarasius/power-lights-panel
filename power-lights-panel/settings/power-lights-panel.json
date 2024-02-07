@@ -1,6 +1,6 @@
 {
   "Data Link": {
-    "Host": "192.168.1.143",
+    "Host": "192.168.178.50",
     "Port": 52020
   },
   "GPIO": {
@@ -44,11 +44,6 @@
         "Toggle": 9
       }
     },
-    "Pitot Heat": {
-      "Switch": {
-        "Toggle": 11
-      }
-    },
     "Avionics1": {
       "Switch": {
         "Toggle": 12
@@ -57,50 +52,6 @@
     "Avionics2": {
       "Switch": {
         "Toggle": 15
-      }
-    },
-    "APU Master": {
-      "Button": {
-        "Push": 18,
-        "Led": 23
-      }
-    },
-    "APU Start": {
-      "Button": {
-        "Push": 24,
-        "Led": 25
-      }
-    },
-    "APU Bleed": {
-      "Button": {
-        "Push": 8,
-        "Led": 7
-      }
-    },
-    "Flaps Up": {
-      "Switch": {
-        "Toggle": 26
-      }
-    },
-    "Flaps Pos": {
-      "RotaryEncoder": {
-        "Rot1": 6,
-        "Rot2": 5
-      }
-    },
-    "Flaps Down": {
-      "Switch": {
-        "Toggle": 16
-      }
-    },
-    "Park Brake Off": {
-      "Switch": {
-        "Toggle": 19
-      }
-    },
-    "Park Brake On": {
-      "Switch": {
-        "Toggle": 13
       }
     }
   }
