@@ -6,47 +6,47 @@
   "GPIO": {
     "Battery1": {
       "Switch": {
-        "Toggle": 2
+        "Toggle": 12
       }
     },
     "Battery2": {
       "Switch": {
-        "Toggle": 3
+        "Toggle": 16
       }
     },
     "Fuel Pump": {
       "Switch": {
-        "Toggle": 4
+        "Toggle": 20
       }
     },
     "Beacon": {
       "Switch": {
-        "Toggle": 17
+        "Toggle": 21
       }
     },
     "Land": {
       "Switch": {
-        "Toggle": 27
+        "Toggle": 8
       }
     },
     "Taxi": {
       "Switch": {
-        "Toggle": 22
+        "Toggle": 7
       }
     },
     "Nav": {
       "Switch": {
-        "Toggle": 10
+        "Toggle": 18
       }
     },
     "Strobe": {
       "Switch": {
-        "Toggle": 9
+        "Toggle": 23
       }
     },
     "Avionics1": {
       "Switch": {
-        "Toggle": 12
+        "Toggle": 2
       }
     },
     "Avionics2": {
